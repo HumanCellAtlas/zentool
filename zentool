@@ -1,0 +1,134 @@
+#!/usr/bin/env python3.6
+
+"""
+ZenHub Utility
+
+    zentool comment <epic_id> "comment"         Add comment to all issues attached to epic
+    zentool release <epic_id> "Release Name"    Assign all tickets attached to epic to release
+"""
+
+from __future__ import print_function
+import argparse
+import os.path
+import sys
+
+from github import Github
+
+from lib.zenhub import ZenHub
+
+
+def output(string):
+    sys.stdout.write(string)
+    sys.stdout.flush()
+
+
+class Commentator:
+
+    @classmethod
+    def configure(cls, subparsers):
+        comment_parser = subparsers.add_parser('comment', description="comment on all issues attached to epic")
+        comment_parser.set_defaults(command='comment')
+        comment_parser.add_argument('epic_id', type=str)
+        comment_parser.add_argument('comment', type=str, metavar="\"comment\"")
+
+    def __init__(self, zenhub, github):
+        self.zenhub = zenhub
+        self.github = github
+
+    def run(self, args):
+        zh_repo = self.zenhub.repository(args.repo_id)
+        epic = zh_repo.epic(args.epic_id)
+        for issue in epic.raw_issues():
+            gh_repo = self.github.get_repo(issue['repo_id'])
+            gh_issue = gh_repo.get_issue(issue['issue_number'])
+            output(f"{gh_repo.full_name} {gh_issue.number} \"{gh_issue.title}\"...")
+            if gh_issue.state == "open":
+                gh_issue.create_comment(args.comment)
+                output(" commenting.\n")
+            else:
+                output(f" is {gh_issue.state}, skipping.\n")
+
+
+class ReleaseAssigner:
+
+    @classmethod
+    def configure(cls, subparsers):
+        assigner_parser = subparsers.add_parser('release', description="Assign all tickets attached to epic to release")
+        assigner_parser.set_defaults(command='release')
+        assigner_parser.add_argument('epic_id', type=str)
+        assigner_parser.add_argument('release_name', type=str,
+                                     help="name of release to assign epic issues to (use quotes if spaces)")
+
+    def __init__(self, zenhub):
+        self.zenhub = zenhub
+
+    def run(self, args):
+        release_name = args.release_name
+        repo = self.zenhub.repository(args.repo_id)
+        print(repo)
+        epic = repo.epic(args.epic_id)
+        print(epic)
+        releases = repo.releases()
+        release_names = [rel.title for rel in releases]
+        if release_name not in release_names:
+            print(f"Unknown release \"{release_name}\". Known releases are {release_names}")
+            exit(1)
+        release = [rel for rel in releases if rel.title == release_name][0]
+        for issue in epic.issues():
+            try:
+                output(f"Adding {issue.repo.id}/{issue.number} to release {release.title}...")
+                resp = release.add_issues([issue])
+                if resp == {'added': [], 'removed': []}:
+                    print("NO CHANGE")
+                elif len(resp['added']) > 0:
+                    print("SUCCESS")
+            except Exception as e:
+                print(f"FAILED: {e}")
+
+
+class ZenTool:
+    def __init__(self):
+        parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+        parser.add_argument('-r', '--repo-id', type=str, default="106337233",
+                            help="ID of repo that contains epic(s), default=106337233 (HumanCellAtlas/dcp)")
+        parser.add_argument('-z', '--zenhub-api-token', help="ZenHub API token")
+        parser.add_argument('-g', '--github-api-token', help="GitHub API token")
+        subparsers = parser.add_subparsers()
+
+        Commentator.configure(subparsers)
+        ReleaseAssigner.configure(subparsers)
+
+        args = parser.parse_args()
+
+        zh_api_token = self._get_config_param_from_cmdline_or_environ(args, 'zenhub-api-token')
+        gh_api_token = self._get_config_param_from_cmdline_or_environ(args, 'github-api-token')
+        zenhub = ZenHub(api_token=zh_api_token)
+        github = Github(login_or_token=gh_api_token)
+
+        if 'command' not in args:
+            parser.print_help()
+            exit(1)
+
+        if args.command == 'comment':
+            Commentator(zenhub=zenhub, github=github).run(args)
+        elif args.command == 'release':
+            ReleaseAssigner(zenhub=zenhub).run(args)
+
+    @staticmethod
+    def _get_config_param_from_cmdline_or_environ(args, param_name):
+        """
+        Get config parameter from command-line arguments or environment.
+        """
+        arg_name = param_name.replace('-', '_')
+        env_var = arg_name.upper()
+        if getattr(args, arg_name):
+            return getattr(args, arg_name)
+        elif env_var in os.environ:
+            return os.environ[env_var]
+        else:
+            print(f"You must provide command option --{param_name} or set environment variable {env_var}")
+            exit(1)
+
+
+if __name__ == '__main__':
+    ZenTool()
