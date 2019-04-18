@@ -49,8 +49,11 @@ class Combo:
         def issue(self, number):
             return Combo.Issue(number=number, repo=self)
 
-        # def epics(self):
-        #     pass
+        def epics(self):
+            return [
+                Combo.Epic(number=zh_epic.id, zh_epic=zh_epic, repo=self)
+                for zh_epic in self.zen.epics()
+            ]
 
         def epic(self, number):
             return Combo.Epic(number=number, repo=self)
@@ -140,6 +143,10 @@ class Combo:
         @property
         def pipeline(self):
             return self.zh_epic.pipeline
+
+        @property
+        def status(self):
+            return self.gh_issue.state
 
         def raw_issues(self):
             return self.zh_epic.raw_issues()

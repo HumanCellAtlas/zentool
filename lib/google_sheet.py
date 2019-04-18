@@ -22,6 +22,11 @@ class GoogleSheet:
         result = self.sheets.values().get(spreadsheetId=self.spreadsheet_id, range=range_name).execute()
         return result.get('values', [])
 
+    def get_cell(self, address):
+        result = self.sheets.values().get(spreadsheetId=self.spreadsheet_id, range=address).execute()
+        values = result.get('values', [])
+        return values[0][0] if values else None
+
     def update_range(self, range_name, values):
         """
         :param range_name: string, e.g. "H39", "H39:J42", or "Sheet Name!A1:B5"

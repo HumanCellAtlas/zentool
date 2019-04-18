@@ -3,8 +3,10 @@
 """
 ZenHub Utility
 
-    zentool comment <epic_id> "comment"         Add comment to all issues attached to epic
-    zentool release <epic_id> "Release Name"    Assign all tickets attached to epic to release
+    zentool -r <repo> comment <epic_id> "comment"         Add comment to all issues attached to epic
+    zentool -r <repo> release <epic_id> "Release Name"    Assign all tickets attached to epic to release
+    zentool -r <repo> spreadsheet <spreadsheet_id> make   Dump epics to a blank spreadsheet
+    zentool -r <repo> spreadsheet <spreadsheet_id> sync   Update spreadsheet with issue status
 """
 
 from __future__ import print_function
@@ -14,6 +16,7 @@ import os.path
 from lib.combo import Combo
 from tools.commentator import Commentator
 from tools.release_assigner import ReleaseAssigner
+from tools.spreadsheet_tools import SpreadsheetTools
 
 
 class ZenTool:
@@ -27,6 +30,7 @@ class ZenTool:
 
         Commentator.configure(subparsers)
         ReleaseAssigner.configure(subparsers)
+        SpreadsheetTools.configure(subparsers)
 
         args = parser.parse_args()
 
@@ -39,10 +43,16 @@ class ZenTool:
             parser.print_help()
             exit(1)
 
-        if args.command == 'comment':
-            Commentator(combo=combo).run(args)
-        elif args.command == 'release':
-            ReleaseAssigner(combo=combo).run(args)
+        try:
+            if args.command == 'comment':
+                Commentator(combo=combo).run(args)
+            elif args.command == 'release':
+                ReleaseAssigner(combo=combo).run(args)
+            elif args.command == 'spreadsheet':
+                SpreadsheetTools(combo=combo).run(args)
+        except (AssertionError, RuntimeError) as e:
+            print("Error: " + str(e) + "\nAborting...")
+            exit(1)
 
     @staticmethod
     def _get_config_param_from_cmdline_or_environ(args, param_name):

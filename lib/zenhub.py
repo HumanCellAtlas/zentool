@@ -88,7 +88,11 @@ class ZenHub:
             return ZenHub.Issue(data, id=issue_id, repo=self)
 
         def epics(self):
-            pass
+            epics_data = self.zenhub.get(f"/p1/repositories/{self.id}/epics")
+            return [
+                ZenHub.Epic(epic_data, id=epic_data['issue_number'], repo=self)
+                for epic_data in epics_data['epic_issues']
+            ]
 
         def epic(self, epic_id):
             data = self.zenhub.get(f"/p1/repositories/{self.id}/epics/{epic_id}")
