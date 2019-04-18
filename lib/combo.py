@@ -22,6 +22,9 @@ class Combo:
             self.zen = combo.zenhub.repository(repo_id=self.git.id)
 
         def __str__(self):
+            return f"{self.__class__.__name__} {self.full_name}"
+
+        def __repr__(self):
             return f"{self.__class__.__name__}[{self.id}]"
 
         @property
@@ -67,7 +70,11 @@ class Combo:
             self._id = id
 
         def __str__(self):
-            return f"{self.__class__.__name__}[{self.repo.id}/{self.id}]: {self.zh_issue} {self.status}"
+            return f"{self.__class__.__name__} " \
+                   f"{self.repo.full_name}/{self.number} ({self.status}) \"{self.title}\""
+
+        def __repr__(self):
+            return f"{self.__class__.__name__} [{self.repo.id}/{self.id}]"
 
         @property
         def id(self):
@@ -105,7 +112,10 @@ class Combo:
             self.number = number
 
         def __str__(self):
-            return f"{self.__class__.__name__}[{self.repo.id}/{self.number}]: {self.zh_epic}"
+            return f"{self.__class__.__name__} {self.repo.full_name}/{self.number} \"{self.title}\""
+
+        def __repr__(self):
+            return f"{self.__class__.__name__}[{self.repo.id}/{self.number}]"
 
         @property
         def zh_epic(self):

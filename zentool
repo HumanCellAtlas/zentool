@@ -5,16 +5,13 @@ ZenHub Utility
 
     zentool comment <epic_id> "comment"         Add comment to all issues attached to epic
     zentool release <epic_id> "Release Name"    Assign all tickets attached to epic to release
-    zentool spreadsheet <spreadsheet_id> sync
 """
 
 from __future__ import print_function
 import argparse
 import os.path
 
-from github import Github
-
-from lib.zenhub import ZenHub
+from lib.combo import Combo
 from tools.commentator import Commentator
 from tools.release_assigner import ReleaseAssigner
 
@@ -22,8 +19,8 @@ from tools.release_assigner import ReleaseAssigner
 class ZenTool:
     def __init__(self):
         parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-        parser.add_argument('-r', '--repo-id', type=str, default="106337233",
-                            help="ID of repo that contains epic(s), default=106337233 (HumanCellAtlas/dcp)")
+        parser.add_argument('-r', '--repo-name', type=str, default="HumanCellAtlas/dcp",
+                            help="Name of repo that contains epic(s), default=HumanCellAtlas/dcp")
         parser.add_argument('-z', '--zenhub-api-token', help="ZenHub API token")
         parser.add_argument('-g', '--github-api-token', help="GitHub API token")
         subparsers = parser.add_subparsers()
@@ -35,17 +32,17 @@ class ZenTool:
 
         zh_api_token = self._get_config_param_from_cmdline_or_environ(args, 'zenhub-api-token')
         gh_api_token = self._get_config_param_from_cmdline_or_environ(args, 'github-api-token')
-        zenhub = ZenHub(api_token=zh_api_token)
-        github = Github(login_or_token=gh_api_token)
+
+        combo = Combo(gh_token=gh_api_token, zh_token=zh_api_token)
 
         if 'command' not in args:
             parser.print_help()
             exit(1)
 
         if args.command == 'comment':
-            Commentator(zenhub=zenhub, github=github).run(args)
+            Commentator(combo=combo).run(args)
         elif args.command == 'release':
-            ReleaseAssigner(zenhub=zenhub).run(args)
+            ReleaseAssigner(combo=combo).run(args)
 
     @staticmethod
     def _get_config_param_from_cmdline_or_environ(args, param_name):

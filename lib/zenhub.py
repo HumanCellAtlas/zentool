@@ -113,7 +113,10 @@ class ZenHub:
                 self.data = release_data
 
         def __str__(self):
-            return f"{self.__class__.__name__}[{self.id}] \"{self.title}\""
+            return f"{self.__class__.__name__} \"{self.title}\""
+
+        def __repr__(self):
+            return f"{self.__class__.__name__}[{self.id}]"
 
         @property
         def id(self):
