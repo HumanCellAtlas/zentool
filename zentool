@@ -3,10 +3,11 @@
 """
 ZenHub Utility
 
-    zentool -r <repo> comment <epic_id> "comment"         Add comment to all issues attached to epic
-    zentool -r <repo> release <epic_id> "Release Name"    Assign all tickets attached to epic to release
-    zentool -r <repo> spreadsheet <spreadsheet_id> make   Dump epics to a blank spreadsheet
-    zentool -r <repo> spreadsheet <spreadsheet_id> sync   Update spreadsheet with issue status
+    zentool -r <repo> comment <epic_id> "comment"                  Add comment to all issues attached to epic
+    zentool -r <repo> release <epic_id> "Release Name"             Assign all tickets attached to epic to release
+    zentool -r <repo> spreadsheet <spreadsheet_id> make            Dump epics to a blank spreadsheet
+    zentool -r <repo> spreadsheet <spreadsheet_id> sync            Update spreadsheet with issue status
+    zentool -r <repo> spreadsheet <spreadsheet_id> create-issues   Create issues where instructed to by sheet
 """
 
 from __future__ import print_function

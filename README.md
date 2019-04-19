@@ -73,11 +73,29 @@ each repo that has an issues attached to one of your epics, and fill
 in the issue number and color code it in that column.  Yellow = open,
 green = closed:
 ```
-zentools --repo-name GITHUB_REPO_NAME spreadsheet SPREADSHEET_ID sync
+zentool --repo-name GITHUB_REPO_NAME spreadsheet SPREADSHEET_ID sync
 
 e.g.
-zentools --repo-name HumanCellAtlas/dcp spreadsheet 3N5tJxhLQ6e7v5IBrjH22q9k8LwISXCG sync
+zentool --repo-name HumanCellAtlas/dcp spreadsheet 3N5tJxhLQ6e7v5IBrjH22q9k8LwISXCG sync
 ```
+
+### Spreadsheet Create-issues: Create Issues as Directed by Sheet
+
+With this command, zentool will search the spreadsheet for the "🛠"
+symbol, and where it finds one, it will create an issue in the repository
+of that column, reusing the title and description from the epic of this
+row, and then attach it to the epic for that row.
+
+```
+zentool --repo-name GITHUB_REPO_NAME spreadsheet SPREADSHEET_ID create-issues
+
+e.g.
+zentool --repo-name HumanCellAtlas/dcp spreadsheet 3N5tJxhLQ6e7v5IBrjH22q9k8LwISXCG create-issues
+```
+
+Note that you must have adequate permissions to create the issue in
+the repository, and to attach it to the epic.  In the past we have
+discovered this is problematic for repositories not in your organization.
 
 ### Comment on Issues Attached to an Epic
 

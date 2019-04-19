@@ -5,6 +5,7 @@ import sys
 from lib.google_sheet import GoogleSheet
 from .make_spreadsheet import MakeSpreadsheet
 from .sync_spreadsheet import SyncSpreadsheet
+from .issue_creator import IssueCreator
 
 
 class SpreadsheetTools:
@@ -19,6 +20,7 @@ class SpreadsheetTools:
 
         MakeSpreadsheet.configure(subparsers)
         SyncSpreadsheet.configure(subparsers)
+        IssueCreator.configure(subparsers)
 
     def __init__(self, combo):
         self.combo = combo
@@ -29,8 +31,10 @@ class SpreadsheetTools:
         self.sheet = GoogleSheet(args.spreadsheet_id)
         if args.subcommand == 'make':
             MakeSpreadsheet(tools=self).run(args)
-        if args.subcommand == 'sync':
+        elif args.subcommand == 'sync':
             SyncSpreadsheet(tools=self).run(args)
+        elif args.subcommand == 'create-issues':
+            IssueCreator(tools=self).run(args)
 
     def cell_addr(self, row, col):
         """
