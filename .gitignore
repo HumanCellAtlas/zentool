@@ -2,3 +2,7 @@ __pycache__
 credentials.json
 token.pickle
 *.ipynb
+build/
+dist/
+setup.py-e
+zentool.egg-info

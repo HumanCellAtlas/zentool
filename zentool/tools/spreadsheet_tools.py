@@ -2,7 +2,7 @@ import os
 import sys
 
 
-from lib.google_sheet import GoogleSheet
+from zentool.lib.google_sheet import GoogleSheet
 from .make_spreadsheet import MakeSpreadsheet
 from .sync_spreadsheet import SyncSpreadsheet
 from .issue_creator import IssueCreator
