@@ -11,6 +11,7 @@ class SpreadsheetProcessor:
     DATA_START_ROW = 3  # all spreadsheet references are 1-based
 
     def __init__(self, tools, row_processor_class):
+        self.args = None
         self.tools = tools
         self.repo = None
         self.repo_map = RepoMap()
@@ -21,13 +22,14 @@ class SpreadsheetProcessor:
         return self.tools.sheet
 
     def run(self, args):
+        self.args = args
         self.repo = self.tools.combo.repo(args.repo_name)
         self._check_sheet_matches_repo()
         self._read_repo_headings()
         self._process_rows()
 
     def _check_sheet_matches_repo(self):
-        headings = self.sheet.get_range("A1:B2")
+        headings = self.sheet.get_cells("A1:B2")
         assert headings[0][0] == 'Repo:', "Expected Cell A1 to contain the word 'Repo:'."
         assert headings[0][1] == self.repo.full_name, (
             f"Command line specified repo {self.repo.full_name} "
@@ -36,7 +38,7 @@ class SpreadsheetProcessor:
         assert headings[1][1] == 'Description', "Expected cell B2 to contain the heading 'Description'."
 
     def _read_repo_headings(self):
-        cells = self.sheet.get_range(self.REPO_HEADING_RANGE)
+        cells = self.sheet.get_cells(self.REPO_HEADING_RANGE)
         if len(cells) == 0:
             return
         row = cells[0]
@@ -48,8 +50,10 @@ class SpreadsheetProcessor:
                 self.repo_map.record(repo, col_number)
 
     def _process_rows(self):
-        row_number = self.DATA_START_ROW
-        sheet_data = self.sheet.get_range(f"A{self.DATA_START_ROW}:Z9999")
+        row_number = self.DATA_START_ROW - 1
+        sheet_data = self.sheet.get_cells(f"A{self.DATA_START_ROW}:Z9999")
         for row in sheet_data:
-            self.row_processor_class(sheet_processor=self).process(row, row_number)
             row_number += 1
+            if self.args.epic_id and row[0] != self.args.epic_id:
+                continue
+            self.row_processor_class(sheet_processor=self).process(row, row_number)

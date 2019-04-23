@@ -1,3 +1,6 @@
+from zentool.lib.sheet_range import SheetRange
+
+
 class MakeSpreadsheet:
     """
     usage: zentool -r <repo> spreadsheet <spreadsheet_id> make
@@ -19,15 +22,21 @@ class MakeSpreadsheet:
         if self.tools.sheet.get_cell("A1"):
             raise RuntimeError("This spreadsheet appears to have content already. "
                                "Did you mean to run 'sync'?")
-        self.tools.sheet.update_range(range_name="A1:B2",
-                                      values=[
-                                          ["Repo:", self.repo.full_name],
-                                          ["Epic", "Description"]
-                                      ])
+
+        range = SheetRange()
+        range['A', 1] = "Repo:"
+        range['B', 1] = self.repo.full_name
+        range['A', 2] = "Epic"
+        range['B', 2] = "Description"
+        # TODO: format these headings
+
         row_cursor = 3  # 1-based
         for epic in self.repo.epics():
             if epic.status == 'open':
-                range_name = f"A{row_cursor}:B"
-                self.tools.sheet.update_range(range_name=range_name,
-                                              values=[[epic.number, epic.title]])
+                print(f"Epic: {epic.number}, {epic.title}")
+                range['A', row_cursor] = epic.number
+                range['B', row_cursor] = epic.title
                 row_cursor += 1
+
+        print("Updating spredsheet...")
+        self.tools.sheet.update_range(range)

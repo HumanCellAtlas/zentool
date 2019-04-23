@@ -1,6 +1,7 @@
 from colored import fg, bg, attr
 
 from .spreadsheet_processor import SpreadsheetProcessor
+from ..lib.sheet_range import SheetRange
 
 
 class IssueCreator:
@@ -14,6 +15,7 @@ class IssueCreator:
     def configure(cls, subparsers):
         sync_parser = subparsers.add_parser('create-issues')
         sync_parser.set_defaults(subcommand='create-issues')
+        sync_parser.add_argument('epic_id', type=str, nargs='?')
 
     def __init__(self, tools):
         self.tools = tools
@@ -32,12 +34,13 @@ class IssueCreator:
             self.row = None
             self.row_number = None
             self.epic = None
+            self.row_range = SheetRange()
 
         def process(self, row, row_number):
             self.row = row
             self.row_number = row_number
             self._find_and_update_epic(epic_number=row[0])
-
+            import pdb; pdb.set_trace()
             for map_entry in self.sheet_processor.repo_map.map.values():
                 try:
                     cell_value = self.row[map_entry.column - 1]
@@ -45,32 +48,30 @@ class IssueCreator:
                     cell_value = None
 
                 if cell_value == '🛠':
-                    print(f"\tCreating issue in repo {map_entry.repo.full_name}")
                     issue = map_entry.repo.create_issue(self.epic.title, self.epic.body)
-
-                    cell_addr = self.sheet_processor.tools.cell_addr(col=map_entry.column, row=self.row_number)
-                    self._insert_link_to_issue(issue, cell_addr)
-                    self._update_issue_status_color(issue, map_entry)
+                    print(f"\tCreated issue {issue}")
+                    self.update_issue_in_sheet(issue, map_entry)
                     print("\tAdding issue to epic")
                     self.epic.add_issues([issue])
+
+            if not self.row_range.is_empty:
+                self.sheet.update_range(self.row_range)
 
         def _find_and_update_epic(self, epic_number):
             self.epic = self.sheet_processor.repo.epic(epic_number)
             print(self.epic)
-            cell_desc_addr = self.sheet_processor.tools.cell_addr(row=self.row_number, col=2)
-            self.sheet.update_range(range_name=cell_desc_addr, values=[[self.epic.title]])
+            self.row_range['B', self.row_number] = self.epic.title
 
-        def _insert_link_to_issue(self, issue, cell_addr):
+        def update_issue_in_sheet(self, issue, map_entry):
+            colname = self.sheet_processor.tools.column_number_to_letter(map_entry.column)
             link_to_issue = '=HYPERLINK("https://github.com/{repo}/issues/{issue}","{issue}")'.format(
                 repo=issue.repo.full_name, issue=issue.number)
-            print(f"\t\t{fg('yellow')}updating {cell_addr} to {link_to_issue}{attr('reset')}")
-            self.sheet.update_range(range_name=cell_addr, values=[[link_to_issue]])
+            self.row_range[colname, self.row_number] = link_to_issue
 
-        def _update_issue_status_color(self, issue, map_entry):
-            print(f"\t\t{fg('yellow')}updating color{attr('reset')}")
             default_colors = {'red': 255, 'green': 255, 'blue': 200}
             state_to_colors_map = {
                 'closed': {'red': 200, 'green': 255, 'blue': 200}
             }
             color = state_to_colors_map.get(issue.status, default_colors)
-            self.sheet.color_cell(self.row_number - 1, map_entry.column - 1, **color)
+
+            self.row_range[colname, self.row_number].bg = color
