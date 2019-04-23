@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 install_requires = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 
 setup(name='zentool',
-      version='1.0.1',
+      version='1.1.0',
       description='Tool for manipulating ZenHub / GitHub using Google Sheets',
       url='https://github.com/HumanCellAtlas/zentool',
       author='Sam Pierson',
