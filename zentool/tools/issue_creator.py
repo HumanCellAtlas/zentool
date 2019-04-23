@@ -40,7 +40,7 @@ class IssueCreator:
             self.row = row
             self.row_number = row_number
             self._find_and_update_epic(epic_number=row[0])
-            import pdb; pdb.set_trace()
+
             for map_entry in self.sheet_processor.repo_map.map.values():
                 try:
                     cell_value = self.row[map_entry.column - 1]
